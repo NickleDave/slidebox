@@ -1,0 +1,6 @@
+<form action="addResults" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit"  name="Save_and_return" value="Save and return to index"/>
+    <input type="submit"  name="Save_and_add_another" value="Save and add another"/>
+</form>
