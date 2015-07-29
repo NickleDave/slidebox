@@ -2,7 +2,9 @@ from django import forms
 from django.forms import TextInput
 from django.core.exceptions import NON_FIELD_ERRORS
 
-from slideAdmin import models as m
+from . import models as m
+from .slideAdminUtilityFuncs import convert_to_total_number_of_sections
+from .slideAdminUtilityFuncs import convert_to_slide_and_section_number
 
 import pdb
 
@@ -125,6 +127,75 @@ class InjectionForm(forms.ModelForm):
                 pass                
                 
 class ResultsForm(forms.ModelForm):
+    extend_same_result = forms.BooleanField(
+        label='Extend same result from slide and section above to another slide and section',
+        required=False)
+    slide_number_to_extend_to = forms.IntegerField(min_value=1,
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class':'extend_result_fields'})
+            )
+    section_number_to_extend_to = forms.IntegerField(min_value=1,
+            required=False,
+            widget=forms.NumberInput(attrs={
+            'class':'extend_result_fields'})
+            )
+
+    def clean(self):
+        cleaned_data = super(ResultsForm, self).clean()
+        if cleaned_data['extend_same_result']:
+            start_slideNum = cleaned_data['slideNum']
+            start_sectionNum = cleaned_data['sectionNum']
+            end_slideNum = cleaned_data['slide_number_to_extend_to']
+            end_sectionNum = cleaned_data['section_number_to_extend_to']
+            if start_slideNum==end_slideNum and start_sectionNum==end_sectionNum:
+                raise forms.ValidationError(
+                    'Can\'t extend result to same slide and section number')
+            else:
+                sections_per_slide = cleaned_data['animalID'].sectionsPerSlide
+                if end_slideNum > start_slideNum or \
+                    (end_slideNum==start_slideNum and end_sectionNum > start_sectionNum):
+                    count_up = True
+                    if start_sectionNum >= sections_per_slide:
+                        curr_sectionNum = 1
+                        curr_slideNum = start_slideNum + 1
+                    else:
+                        curr_sectionNum = start_sectionNum + 1
+                        curr_slideNum = start_slideNum
+                elif end_slideNum < start_slideNum or \
+                    (end_slideNum==start_slideNum and end_sectionNum < start_sectionNum):
+                    count_down = True
+                    if start_sectionNum == 1:
+                        curr_sectionNum = sections_per_slide
+                        curr_slideNum = start_slideNum - 1
+                    else:
+                        curr_sectionNum = start_sectionNum - 1
+                        curr_slideNum = start_slideNum
+            pdb.set_trace()
+            while True:
+                m.results.objects.create(
+                    slideNum = curr_slideNum,
+                    sectionNum  = curr_sectionNum,
+                    animalID = cleaned_data['animalID'],
+                    anatArea = cleaned_data['anatArea'],
+                    result = cleaned_data['result'],
+                    channel =cleaned_data['channel'], 
+                    )
+                if curr_sectionNum == end_sectionNum and curr_slideNum  == end_slideNum:
+                    break
+                if count_up:
+                    if curr_sectionNum >= sections_per_slide:
+                            curr_sectionNum = 1
+                            curr_slideNum += 1
+                    else:
+                            curr_sectionNum += 1
+                elif count_down:
+                    if curr_sectionNum == 1:
+                        curr_sectionNum = sections_per_slide
+                        curr_slideNum -= 1
+                    else:
+                        curr_sectionNum -= 1
+
     class Meta:
         model = m.results
         fields = ['animalID',
@@ -141,4 +212,64 @@ class ResultsForm(forms.ModelForm):
         widgets = {
             'slideNum': forms.NumberInput(attrs={'min': 1}),
             'sectionNum': forms.NumberInput(attrs={'min': 1}),
-        }
+        }      
+            
+class FindDistanceForm(forms.Form):
+    # can only estimate distance from midline by counting sections
+    # if the brain was cut parasagitally; so, filter animalIDs to return only
+    # those cut parasagitally
+    animalIDs = forms.ModelMultipleChoiceField(
+        label = 'animal ID (selecting multiple returns average)',
+        queryset = m.animalID.objects.filter(sectionPlane='PS'))
+    anatAreas = forms.ModelChoiceField(
+        label = 'anatomical area',
+        queryset = m.anatAreas.objects.all(),
+        empty_label=None)
+
+    def clean(self):
+        cleaned_data = super(FindDistanceForm, self).clean()
+        #first make sure that anatomical area that user is searching for has been
+        #entered as a result in the animalID(s) user is searching
+        anatArea_pk = cleaned_data['anatAreas'].pk
+        #MultipleModelChoice field returns a list, have to access with index
+        for curr_animalID in cleaned_data['animalIDs']:
+            if not m.results.objects.filter(animalID=curr_animalID,anatArea=anatArea_pk).exists():
+                raise forms.ValidationError('Selected anatomical area not found in selected animals')
+            #Problem: if there are multiple sections with the area entered in the form, it will blow up
+            #the measure function below (when the function tries to "get" the appropriate slide and section
+            #number with a QuerySet and multiple objects are returned, this will raise an error)
+
+        #couldn't I just have the form return the anatArea.pk in cleaned_data?
+        
+    def measure(self):
+        cleaned_data = self.cleaned_data
+        animalIDs = cleaned_data['animalIDs']
+        anatArea_pk = cleaned_data['anatAreas'].pk
+        InC_pk = m.anatAreas.objects.get(abbreviation='InC').pk
+        sections_with_InC = \
+            m.results.objects.filter(animalID=animalIDs,anatArea=InC_pk).values('slideNum','sectionNum')
+        measure_dict = {}
+        for curr_animalID in animalIDs:
+            curr_anatArea = m.results.objects.get(animalID=curr_animalID,
+                anatArea=anatArea_pk)
+            curr_anatArea_section = convert_to_total_number_of_sections(
+                    curr_animalID,
+                    curr_anatArea.slideNum,
+                    curr_anatArea.sectionNum)
+            InC_sections = []
+            for InC_results in m.results.objects.filter(animalID=curr_animalID,anatArea=InC_pk):
+                InC_sections.append(convert_to_total_number_of_sections(
+                    curr_animalID,
+                    InC_results.slideNum,
+                    InC_results.sectionNum))
+            takeClosest = lambda num,collection:min(collection,key=lambda x:abs(x-num))
+            InC_section_to_use = takeClosest(curr_anatArea_section,InC_sections)
+            distance = (curr_anatArea_section - InC_section_to_use + 1) * curr_animalID.sectionThickness
+            measure_dict[curr_animalID] = distance
+        return measure_dict
+        
+    # figure out distance
+   # midline, i.e. zero is defined as "between" the two sections with InC in them
+   # so, figure out which of the two sections with InC is closer to the 
+   # then add up all the sections between and including that one section with InC and the section with
+   # the area of interest in it

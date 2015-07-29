@@ -7,4 +7,6 @@ urlpatterns = [
     url(r'^addInject$', views.addInject, name='addInject'),
     url(r'^addAnimal$', views.addAnimal, name='addAnimal'),
     url(r'^addResults$', views.addResults, name='addResults'),
+    url(r'^FindDistance$', views.FindDistance,
+        name='FindDistance'),
 ]

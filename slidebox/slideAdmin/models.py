@@ -9,6 +9,9 @@ class animalID(models.Model):
     surgeryNotebook = models.IntegerField(validators=[MinValueValidator(1)])
     surgeryNotebookPage = models.IntegerField(validators=[MinValueValidator(1)])
     sectionDate = models.DateField()
+    sectionsPerSlide = models.IntegerField(default=6,
+        validators=[MinValueValidator(1)]
+        )
 
     PARASAGITTAL = 'PS'
     CORONAL = 'CO'

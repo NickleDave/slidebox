@@ -5,6 +5,8 @@ from django.core.urlresolvers import reverse
 
 from .forms import *
 
+import pdb
+
 def index(request):
     template = loader.get_template('slideAdmin/index.html')
     return HttpResponse(template.render())
@@ -32,7 +34,7 @@ def addInject(request):
 def addResults(request): 
     if request.method == 'POST':
         form = ResultsForm(request.POST)
-
+        
         if form.is_valid():
             form.save()
 
@@ -61,12 +63,13 @@ def addResults(request):
 #        starts_with = request.GET['suggestion']
 
 
-#def findAvgDistance(request):
-#    if request.method == 'POST':
-#        form = findAvgDistanceForm(request.POST)
+def FindDistance(request):
+    if request.method == 'POST':
+        form = FindDistanceForm(request.POST)
+        if form.is_valid():
+            measure_dict = form.measure()
+            return HttpResponseRedirect(reverse('slideAdmin:index'))
+    else: # if request.method == 'GET'
+        form = FindDistanceForm()
 
-#        if form.is_valid():
-#            # figure out distance
-#    else:
-#        form = ResultsForm()
-#        return render(request, 'slideAdmin/findAvgDistance.html', {'form': form})
+    return render(request,'slideAdmin/FindDistance.html',{'form': form})
