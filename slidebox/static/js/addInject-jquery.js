@@ -8,15 +8,19 @@ $(document).ready(function(){
     $('#id_injectionMethod').on('change', function() {
         if ( $('#id_injectionMethod').val() == ""){
             $('.option_1_fields').hide();
+            $('.option_1_fields').val('');
             $('.option_2_fields').hide();
+            $('.option_2_fields').val('');            
             }         
         else if ( $('#id_injectionMethod').val() == "1"){
             $('.option_1_fields').show();
             $('.option_2_fields').hide();
+            $('.option_2_fields').val('');
             }
         else if ( $('#id_injectionMethod').val() == "2"){
             $('.option_2_fields').show();
             $('.option_1_fields').hide();
+            $('.option_1_fields').val('');
             }
     });
 

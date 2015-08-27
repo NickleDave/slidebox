@@ -1,22 +1,4 @@
-<h1>Index</h1>
-<ul>
-<li>Add:
-    <ul>
-    <li><a href="{% url 'slideAdmin:addAnimal' %}">animal</a>
-    <li><a href="{% url 'slideAdmin:addInject' %}">injection</a>
-    <li><a href="{% url 'slideAdmin:addResults' %}">results</a>
-    </ul>
-<li>Search:
-    <ul>
-    <li>animals
-    <li>injections
-    <li>results
-    </ul>
-<li>Measure:
-    <ul>
-    <li><a href="{% url 'slideAdmin:FindDistance' %}">
-        distance</a>
-    <li>width (across parasagittal sections)
-    </ul>
-</ul>
+{% extends 'slideAdmin\base.html' %}
 
+{%block body_block %}
+{% endblock %}

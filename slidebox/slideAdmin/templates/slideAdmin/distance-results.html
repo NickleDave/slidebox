@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Find distance results</title>
+    </head>
+    <body>
+        {% if cleaned_data %}
+            <p>You requested the distance from the midline to
+            {{ cleaned_data.anatAreas }}
+            for {{ cleaned_data.animalIDs.0.IDnumber }}</p>
+            <p>calculated distance: {{ cleaned_data.distance }} micrometers </p>    
+        {% endif %}
+    </body>
+</html>

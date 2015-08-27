@@ -49,6 +49,43 @@ def addResults(request):
         form = ResultsForm()
     return render(request, 'slideAdmin/addResults.html', {'form': form})
 
+def searchAnimal(request):
+    if request.method == 'GET' and request.GET:
+        form = search_animal_form(request.GET)
+        if form.is_valid():
+            animal_results={}
+            animal_results['animal_ID'] = \
+                m.animalID.objects.filter(IDnumber=form.cleaned_data['animal_ID'])
+            animal_results['injections'] = \
+                m.injection.objects.filter(animalID=animal_results['animal_ID'])
+            return render(request,'slideAdmin/search-animal-results.html',
+                    {'animal_results':animal_results})
+    else:
+        form = search_animal_form()
+    return render(request, 'slideAdmin/searchAnimal.html',{'form':form})
+
+#def searchInject(request):
+#    if request.method == 'GET' and request.GET:
+#        form = search_inject_form(request.GET)
+#        if form.is_valid():
+#                cleaned_data = form.cleaned_data
+#                return render(request, '
+#    else:
+#        form = search_inject_form()
+#    return render(request, 'slideAdmin/searchInject.html')
+
+def find_distance(request):
+    #Django calls page with 'GET' the first time but Querydict is empty
+    if request.method == 'GET' and request.GET:
+        form = find_distance_form(request.GET)
+        if form.is_valid():
+            cleaned_data = form.measure()
+            return render(request, 'slideAdmin/distance-results.html',
+                {'cleaned_data':cleaned_data})
+    else:
+        form = find_distance_form()
+    return render(request,'slideAdmin/FindDistance.html',{'form':form})
+
 #def get_animalIDs(starts_with=''):
 #    ID_list = []
 #    if starts_wth:
@@ -61,15 +98,3 @@ def addResults(request):
 #    starts_with = ''
 #    if request.method == 'GET'
 #        starts_with = request.GET['suggestion']
-
-
-def FindDistance(request):
-    if request.method == 'POST':
-        form = FindDistanceForm(request.POST)
-        if form.is_valid():
-            measure_dict = form.measure()
-            return HttpResponseRedirect(reverse('slideAdmin:index'))
-    else: # if request.method == 'GET'
-        form = FindDistanceForm()
-
-    return render(request,'slideAdmin/FindDistance.html',{'form': form})

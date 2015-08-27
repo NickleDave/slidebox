@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    {% load static %}
+    <title>Slidebox: {% block title %}Default title{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}">
+    <body>
+        <div class="container">
+            <div id="header"></div>
+            <div id="sidebar">
+                <ul>
+                <li>Add:
+                    <ul>
+                    <li><a href="{% url 'slideAdmin:addAnimal' %}">animal</a>
+                    <li><a href="{% url 'slideAdmin:addInject' %}">injection</a>
+                    <li><a href="{% url 'slideAdmin:addResults' %}">results</a>
+                    </ul>
+                <li>Search:
+                    <ul>
+                    <li><a href="{% url 'slideAdmin:searchAnimal' %}">animal</a>
+
+                    <li>results
+                    </ul>
+                <li>Measure:
+                    <ul>
+                    <li><a href="{% url 'slideAdmin:find_distance' %}">
+                        find distance from midline</a>
+                    <li>width (across parasagittal sections)
+                    </ul>
+                </ul>
+            </div>
+            <div id="content">
+                {% block body_block %}{% endblock %}
+            </div>
+            <div id="footer"></div>
+</html>

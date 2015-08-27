@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <name="Results from search by animal ID">
+</head>
+<p>Results from search by animal ID:</P>
+
+{% if animal_results %}
+    <ul>{{animal_results.animal_ID}}
+        {% for inject in animal_results.injections %}
+        <div id="inject_{{ forloop.counter }}" class="expand">
+        <li>{{ inject.anatTarget }}
+        <ul>
+            <li>{{ inject.tracer }}
+            <li>{{ inject.injectionMethod }}
+        </ul>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No animal IDs matched that search.</p>
+{% endif %}
+</head>

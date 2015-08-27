@@ -1,19 +1,22 @@
-<!DOCTYPE html>
-<html>
-    <head>
+{% extends 'slideAdmin\base.html' %}
+
+    {% block titleblock %}
         <title>Add Results</title>
+    {% endblock %}
+
+    {% block script_block %}
         {% load static %}
         <link rel="stylesheet" type="text/css"
             href="{% static 'css/addResults.css' %}" />
         <script src="{% static "js/jquery-2.1.4.js" %}"></script>
         <script src="{% static "js/addResults-jquery.js" %}"></script>
-    </head>
-    <body>
+    {% endblock %}
+    
+    {% block body_block %}
         <form action="addResults" method="post">
             {% csrf_token %}
             {{ form.as_p }}
         <input type="submit"  name="Save_and_return" value="Save and return to index"/>
         <input type="submit"  name="Save_and_add_another" value="Save and add another"/>
         </form>
-    </body>
-</html>
+    {% endblock %}

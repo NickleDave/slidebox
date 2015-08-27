@@ -1,18 +1,20 @@
-<!DOCTYPE html>
-<html>
-    <head>
+{% extends 'slideAdmin\base.html' %}
+
+    {% block titleblock %}
         <title>Add Injection</title>
+    {% endblock %}
+
+    {% block script_block %}
         {% load static %}
-        <link rel="stylesheet" type="text/css"
-            href="{% static 'css/addInject.css' %}" />
+        <link rel="stylesheet" type="text/css" href="{% static "css/addInject.css" %}" />
         <script src="{% static "js/jquery-2.1.4.js" %}"></script>
         <script src="{% static "js/addInject-jquery.js" %}"></script>
-    </head>
-    <body>
+    {% endblock %}
+
+{%block body_block %}
         <form action="addInject" method="post">
             {% csrf_token %}
             {{ form.as_p }}
         <input type="submit" value="Submit" />
         </form>
-    </body>
-</html>
+{% endblock %}

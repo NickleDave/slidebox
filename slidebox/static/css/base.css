@@ -1,0 +1,58 @@
+@font-face {
+    font-family: 'Source Code Pro';
+    /*http://www.fontsquirrel.com/fonts/source-code-pro-->*/
+    src: url('../font/SourceCodePro-Regular.otf')
+         format('opentype');
+}
+
+html, body {
+    margin:0;
+    padding:0;
+}
+
+#header {
+    overflow:hidden;
+    position:relative;
+}
+
+#app_name_h1 {
+    color:CornflowerBlue;
+    position:absolute;
+    bottom:0;
+    right:0;
+    font-size:4em;
+    margin:0 0 0 0;
+}
+
+#slidebox_img {
+    display:block;
+    float:left;
+}
+
+#container {
+    height: 200vh;
+    margin:0 auto;
+}
+
+#navbar {
+    float:right;
+    width:33%;
+    background-color: Aqua;
+    height:200vh;
+    margin:0 0 0 0;
+}
+
+#navbar ul li {
+        list-style-type: none;
+}
+
+#content {
+    float:left;
+    width:63%;
+    height:200vh;
+    margin:0 0 0 0;
+    background-color:AliceBlue;
+    padding:2%
+}
+
+#navbar, #content { font-family:"Source Code Pro", regular; }

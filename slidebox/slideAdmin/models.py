@@ -1,15 +1,18 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 
 class animalID(models.Model):
-    IDnumber = models.CharField('animal ID',max_length = 10)
+    IDnumber = models.CharField(verbose_name='animal ID',max_length = 10,
+        validators=[RegexValidator(regex=r'[a-z]{2}[0-9]{2,3}',
+            message="Animal ID must consist of two sets of two letters and 1-3 numbers, e.g., gy6or113")])
     surgeryDate = models.DateField('date of surgery')
     perfusionDate = models.DateField('date of perfusion')
-    surgeryNotebook = models.IntegerField(validators=[MinValueValidator(1)])
-    surgeryNotebookPage = models.IntegerField(validators=[MinValueValidator(1)])
-    sectionDate = models.DateField()
-    sectionsPerSlide = models.IntegerField(default=6,
+    surgeryNotebook = models.IntegerField('surgery notebook',validators=[MinValueValidator(1)])
+    surgeryNotebookPage = models.IntegerField('surgery notebook page',validators=[MinValueValidator(1)])
+    sectionDate = models.DateField('sectioning data')
+    sectionsPerSlide = models.IntegerField('sections per slide',default=6,
         validators=[MinValueValidator(1)]
         )
 
@@ -21,10 +24,10 @@ class animalID(models.Model):
 		(HORIZONTAL, 'Horizontal'),
 	)
 
-    sectionPlane = models.CharField(max_length = 2,choices = SECTION_PLANE_CHOICES,
+    sectionPlane = models.CharField('plane of section',max_length = 2,choices = SECTION_PLANE_CHOICES,
 	default = PARASAGITTAL)
 
-    sectionThickness = models.IntegerField(validators=[MinValueValidator(1)])
+    sectionThickness = models.IntegerField('section thickness',validators=[MinValueValidator(1)])
 
     def clean(self):
         if self.perfusionDate < self.surgeryDate:
@@ -78,10 +81,10 @@ class injectMethods(models.Model):
         return self.method
 
 class injection(models.Model):
-    animalID = models.ForeignKey(animalID,default=None)
-    anatTarget = models.ForeignKey(anatAreas)
+    animalID = models.ForeignKey(animalID,default=None,verbose_name="animal ID")
+    anatTarget = models.ForeignKey(anatAreas,verbose_name="anatomical target")
     tracer = models.ForeignKey(tracerTypes)
-    injectionMethod = models.ForeignKey(injectMethods)
+    injectionMethod = models.ForeignKey(injectMethods,verbose_name="injection method")
     current = models.IntegerField('current in uA',validators=[MinValueValidator(0)],null=True,blank=True)
     seconds_on = models.DecimalField('seconds on',
         validators=[MinValueValidator(0)],
@@ -91,6 +94,7 @@ class injection(models.Model):
         validators=[MinValueValidator(0)],
         null=True,blank=True,
         max_digits = 3,decimal_places=1)
+    duration = models.IntegerField('duration (minutes)',validators=[MinValueValidator(0)],null=True,blank=True)
     nl_per_inject = models.DecimalField('nanoliters per inject',
         validators=[MinValueValidator(0)],
         null=True,blank=True,
@@ -105,8 +109,10 @@ class injection(models.Model):
         max_digits=3,decimal_places=2)
     DVcoord = models.DecimalField('dorsal-ventral co-ordinate',
         max_digits=3,decimal_places=2)
-    beakBarAngle = models.DecimalField(max_digits = 3,decimal_places=1)
-    probeArmAngle = models.DecimalField(max_digits = 3,decimal_places=1)
+    time_waited_after_injection = models.IntegerField('Time waited after injection (minutes)',
+        validators=[MinValueValidator(0)],null=True,blank=True)
+    beakBarAngle = models.DecimalField('beak bar angle', max_digits = 3,decimal_places=1)
+    probeArmAngle = models.DecimalField('probe arm angle',max_digits = 3,decimal_places=1)
     comments = models.TextField(blank=True)
     
     def __str__(self):

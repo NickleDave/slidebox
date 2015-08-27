@@ -1,0 +1,36 @@
+{% extends 'slideAdmin\base.html' %}
+
+    {% block titleblock %}
+        <title>Results from search by animal ID</title>
+    {% endblock %}
+
+    {% block script_block %}
+        {% load static %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/search-animal-results.css' %}">
+        <script type='text/javascript' src="{% static 'js/jquery-2.1.4.js' %}"></script>
+        <script type='text/javascript' src="{% static 'js/search-animal-results.js' %}"></script>
+    {% endblock %}
+
+    {% block body_block %}
+        <p>Results from search by animal ID:</P>
+        {% if animal_results %}
+            <ul>{{animal_results.animal_ID}}
+                {% for inject in animal_results.injections %}
+                    <div id="content" class="expand">
+                    <li>injection in {{ inject.anatTarget }} of {{ inject.tracer }} 
+                    <ul>
+                        <li>{{ inject.injectionMethod }}
+                        {% if inject.current %}
+                        <li>current: {{ inject.current }}
+                        {% endif %}
+                        {% if inject.nl_per_inject %}
+                        <li>nL per {{inject.nl_per_inject }}
+                        {% endif %}
+                    </ul>
+                    </div>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No animal IDs matched that search.</p>
+        {% endif %}
+    {% endblock %}

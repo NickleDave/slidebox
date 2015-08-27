@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    {% load static %}
+    <title>Slidebox: {% block title %}Default title{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}">
+    {% block script_block %}{% endblock %}
+    <body>
+        <div id="header">
+                <!--https://www.flickr.com/photos/laetiphotos/8480727170/sizes/o/-->
+                <img id="slidebox_img" src="{% static "jpg/slidebox.jpg" %}" alt="slide box"/>
+                <h1 id="app_name_h1">slidebox.</h1>
+        </div>
+        <div id="container">
+            <div id="content">
+                {% block body_block %}{% endblock %}
+            </div>
+            <div id="navbar">
+                <ul>
+                <li>Add:
+                    <ul>
+                    <li><a href="{% url 'slideAdmin:addAnimal' %}">animal</a>
+                    <li><a href="{% url 'slideAdmin:addInject' %}">injection</a>
+                    <li><a href="{% url 'slideAdmin:addResults' %}">results</a>
+                    </ul>
+                <li>Search:
+                    <ul>
+                    <li><a href="{% url 'slideAdmin:searchAnimal' %}">animal</a>
+
+                    <li>results
+                    </ul>
+                <li>Measure:
+                    <ul>
+                    <li><a href="{% url 'slideAdmin:find_distance' %}">
+                        find distance from midline</a>
+                    <li>width (across parasagittal sections)
+                    </ul>
+                </ul>
+            </div><!-- "navbar" -->
+        </div><!-- "wrap" -->
+    </body>
+</html>

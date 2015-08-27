@@ -8,19 +8,6 @@ from .slideAdminUtilityFuncs import convert_to_slide_and_section_number
 
 import pdb
 
-class InlineModelChoiceField(forms.ModelChoiceField):
-    def __init__(self, *args, **kwargs):
-        kwargs['widget'] = kwargs.pop('widget', forms.widgets.TextInput)
-        super(InlineModelChoiceField, self).__init__(*args, **kwargs)
-
-    def clean(self, value):
-        if not value and not self.required:
-            return None
-        try:
-            return self.queryset.filter(IDnumber=value).get()
-        except self.queryset.model.DoesNotExist:
-            raise forms.ValidationError("Please enter a valid %s." % (self.queryset.model._meta.verbose_name,))
-
 class AnimalForm(forms.ModelForm):
     class Meta:
         model = m.animalID
@@ -38,26 +25,37 @@ class AnimalForm(forms.ModelForm):
         }
 
 class InjectionForm(forms.ModelForm):
-    animalID = InlineModelChoiceField(queryset=m.animalID.objects.all())
 
     class Meta:
         model = m.injection
         fields = ['animalID',
             'anatTarget',
             'tracer',
-            'injectionMethod',
-            'current',
-            'seconds_on',
-            'seconds_off',
-            'nl_per_inject',
-            'number_injects',
-            'sec_bt_injects',
             'APcoord',
             'LMcoord',
             'DVcoord',
             'beakBarAngle',
             'probeArmAngle',
+            'injectionMethod',
+            'current',
+            'duration',
+            'seconds_on',
+            'seconds_off',
+            'nl_per_inject',
+            'number_injects',
+            'sec_bt_injects',
+            'time_waited_after_injection',
             'comments']
+        widgets = {
+            'current': forms.NumberInput(attrs={'min': 0}),
+            'duration': forms.NumberInput(attrs={'min': 0}),
+            'seconds_on': forms.NumberInput(attrs={'min': 0}),
+            'seconds_off': forms.NumberInput(attrs={'min': 0}),
+            'nl_per_inject': forms.NumberInput(attrs={'min': 0}),
+            'number_injects': forms.NumberInput(attrs={'min': 0}),
+            'sec_bt_injects': forms.NumberInput(attrs={'min': 0}),
+            'time_waited_after_injection': forms.NumberInput(attrs={'min': 0}),
+        }
     def __init__(self,*args, **kwargs):
         super(InjectionForm, self).__init__(*args, **kwargs)
         OPTION_VALUE_1_FIELDS = [
@@ -66,6 +64,7 @@ class InjectionForm(forms.ModelForm):
             'sec_bt_injects']
         OPTION_VALUE_2_FIELDS = [
             'current',
+            'duration',
             'seconds_on',
             'seconds_off',
             ]
@@ -86,7 +85,12 @@ class InjectionForm(forms.ModelForm):
         instance "appears" unique. To get around this we use a complicated-looking
         QuerySet "get" method that only searches the appropriate fields and also
         ignores the null fields.
+        Also need to check that user did not enter values for both pressure injection
+        and iontophoresis. If user did, then raise ValidationError saying to
+        choose only one method."
         """
+        super(InjectionForm, self).clean()
+        # validate uniqueness
         injectMethods = m.injectMethods.objects.all()
         injectMethod_from_Form = self.cleaned_data['injectionMethod'].method
         if injectMethod_from_Form == 'Pressure injection -- Nanoject II':
@@ -115,6 +119,7 @@ class InjectionForm(forms.ModelForm):
                     current=self.cleaned_data['current'],
                     seconds_on=self.cleaned_data['seconds_on'],
                     seconds_off=self.cleaned_data['seconds_off'],
+                    duration=self.cleaned_data['duration'],
                     APcoord=self.cleaned_data['APcoord'],
                     LMcoord=self.cleaned_data['LMcoord'],
                     DVcoord=self.cleaned_data['DVcoord'],
@@ -124,8 +129,22 @@ class InjectionForm(forms.ModelForm):
             except m.injection.MultipleObjectsReturned:
                 raise forms.ValidationError('Injection exists already.')            
             except m.injection.DoesNotExist:
-                pass                
-                
+                pass             
+        #check if user entered something in fields not associated with the chosen injection method
+#        if self.cleaned_data['injectionMethod'].method == 'Pressure injection -- Nanoject II' \
+#            and (self.cleaned_data['current'] is not None or \
+#                 self.cleaned_data['seconds_on'] is not None or \
+#                 self.cleaned_data['seconds_off'] is not None or \
+#                 self.cleaned_data['duration'] is not None):
+#            raise forms.ValidationError(
+#                'Values entered in iontophoresis fields but method is pressure injection')
+#        if self.cleaned_data['injectionMethod'].method == 'Iontophoresis' \
+#            and (self.cleaned_data['nl_per_inject'] is not None or \
+#                 self.cleaned_data['number_injects'] is not None or \
+#                 self.cleaned_data['sec_bt_injects'] is not None):
+#            raise forms.ValidationError(
+#                'Values entered in pressure injection fields but method is iontophoresis')
+        
 class ResultsForm(forms.ModelForm):
     extend_same_result = forms.BooleanField(
         label='Extend same result from slide and section above to another slide and section',
@@ -213,8 +232,15 @@ class ResultsForm(forms.ModelForm):
             'slideNum': forms.NumberInput(attrs={'min': 1}),
             'sectionNum': forms.NumberInput(attrs={'min': 1}),
         }      
+
+class search_animal_form(forms.Form):
+    ID_errs = {'invalid':'Animal ID must consist of two sets of two letters and 1-3 numbers, e.g., gy6or113'}
+    animal_ID = forms.RegexField(label="animal ID",
+        regex='[a-z]{2}[0-9]{1,3}[a-z]{2}[0-9]{1,3}',
+        max_length=10,
+        error_messages=ID_errs)
             
-class FindDistanceForm(forms.Form):
+class find_distance_form(forms.Form):
     # can only estimate distance from midline by counting sections
     # if the brain was cut parasagitally; so, filter animalIDs to return only
     # those cut parasagitally
@@ -225,9 +251,13 @@ class FindDistanceForm(forms.Form):
         label = 'anatomical area',
         queryset = m.anatAreas.objects.all(),
         empty_label=None)
+    resultType = forms.ModelChoiceField(
+        label = 'result type',
+        queryset = m.resultTypes.objects.all(),
+        empty_label=None)
 
     def clean(self):
-        cleaned_data = super(FindDistanceForm, self).clean()
+        cleaned_data = super(find_distance_form, self).clean()
         #first make sure that anatomical area that user is searching for has been
         #entered as a result in the animalID(s) user is searching
         anatArea_pk = cleaned_data['anatAreas'].pk
@@ -238,8 +268,6 @@ class FindDistanceForm(forms.Form):
             #Problem: if there are multiple sections with the area entered in the form, it will blow up
             #the measure function below (when the function tries to "get" the appropriate slide and section
             #number with a QuerySet and multiple objects are returned, this will raise an error)
-
-        #couldn't I just have the form return the anatArea.pk in cleaned_data?
         
     def measure(self):
         cleaned_data = self.cleaned_data
@@ -248,7 +276,6 @@ class FindDistanceForm(forms.Form):
         InC_pk = m.anatAreas.objects.get(abbreviation='InC').pk
         sections_with_InC = \
             m.results.objects.filter(animalID=animalIDs,anatArea=InC_pk).values('slideNum','sectionNum')
-        measure_dict = {}
         for curr_animalID in animalIDs:
             curr_anatArea = m.results.objects.get(animalID=curr_animalID,
                 anatArea=anatArea_pk)
@@ -265,8 +292,8 @@ class FindDistanceForm(forms.Form):
             takeClosest = lambda num,collection:min(collection,key=lambda x:abs(x-num))
             InC_section_to_use = takeClosest(curr_anatArea_section,InC_sections)
             distance = (curr_anatArea_section - InC_section_to_use + 1) * curr_animalID.sectionThickness
-            measure_dict[curr_animalID] = distance
-        return measure_dict
+            cleaned_data['distance'] = distance
+        return cleaned_data
         
     # figure out distance
    # midline, i.e. zero is defined as "between" the two sections with InC in them
