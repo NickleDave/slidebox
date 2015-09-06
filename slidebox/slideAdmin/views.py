@@ -58,6 +58,9 @@ def searchAnimal(request):
                 m.animalID.objects.filter(IDnumber=form.cleaned_data['animal_ID'])
             animal_results['injections'] = \
                 m.injection.objects.filter(animalID=animal_results['animal_ID'])
+            animal_results['inject_field_names'] = \
+                [f.name for f in m.injection._meta.get_fields()]
+
             return render(request,'slideAdmin/search-animal-results.html',
                     {'animal_results':animal_results})
     else:

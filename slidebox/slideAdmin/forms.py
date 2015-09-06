@@ -239,6 +239,12 @@ class search_animal_form(forms.Form):
         regex='[a-z]{2}[0-9]{1,3}[a-z]{2}[0-9]{1,3}',
         max_length=10,
         error_messages=ID_errs)
+
+class search_inject_form(forms.Form):
+    anat_target = forms.ModelChoiceField(queryset=m.anatAreas.objects.all(),label='anatomical target')
+    tracer_type = forms.ModelChoiceField(queryset=m.tracerTypes.objects.all())
+    surgery_date_after = forms.DateField()
+    surgery_date_before = forms.DateField()
             
 class find_distance_form(forms.Form):
     # can only estimate distance from midline by counting sections
@@ -294,9 +300,3 @@ class find_distance_form(forms.Form):
             distance = (curr_anatArea_section - InC_section_to_use + 1) * curr_animalID.sectionThickness
             cleaned_data['distance'] = distance
         return cleaned_data
-        
-    # figure out distance
-   # midline, i.e. zero is defined as "between" the two sections with InC in them
-   # so, figure out which of the two sections with InC is closer to the 
-   # then add up all the sections between and including that one section with InC and the section with
-   # the area of interest in it

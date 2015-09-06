@@ -11,21 +11,21 @@
         <script type='text/javascript' src="{% static 'js/search-animal-results.js' %}"></script>
     {% endblock %}
 
+    {% load slideAdmin_extras %}
+
     {% block body_block %}
-        <p>Results from search by animal ID:</P>
         {% if animal_results %}
+        <p>Results from search by animal ID:</P>
             <ul>{{animal_results.animal_ID}}
                 {% for inject in animal_results.injections %}
-                    <div id="content" class="expand">
-                    <li>injection in {{ inject.anatTarget }} of {{ inject.tracer }} 
+                    <div class="inject_info">
                     <ul>
-                        <li>{{ inject.injectionMethod }}
-                        {% if inject.current %}
-                        <li>current: {{ inject.current }}
+                    {% for field_name in animal_results.inject_field_names %}
+                        {% if inject|get_field_value:field_name %}
+                            <li> {{ inject|get_verbose_name:field_name }} : 
+                                 {{ inject|get_field_value:field_name }}
                         {% endif %}
-                        {% if inject.nl_per_inject %}
-                        <li>nL per {{inject.nl_per_inject }}
-                        {% endif %}
+                    {% endfor %}
                     </ul>
                     </div>
                 {% endfor %}

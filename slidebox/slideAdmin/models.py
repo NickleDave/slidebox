@@ -121,7 +121,7 @@ class injection(models.Model):
         self.APcoord,
         self.LMcoord,
         self.DVcoord)
-
+            
 class resultTypes(models.Model):
     result = models.CharField('result type',max_length=50)
     def __str__(self):
